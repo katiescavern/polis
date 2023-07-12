@@ -11,6 +11,7 @@ var men = [];
 var women = [];
 var cheaters = [];
 var children = [];
+var newCouples = [];
 function randomGaussian(mean, standardDeviation) {
   let u = 0, v = 0;
   while (u === 0) u = Math.random(); // Converting [0,1) to (0,1)
@@ -64,7 +65,7 @@ const codonTable = {
 };
 //A, R, N, D, C, Q, E, G, H, I, L, K, M, F, P, S, T, W, Y, V
 function new1(){
-	for (let i=0; i < 10; i++){
+	for (let i=0; i < 8; i++){
 		new2(0,null,true,null,null);
 	}
 	let ohpointfive = [];
@@ -91,10 +92,10 @@ function new1(){
 				p2 = human[j];
 			}
 		}
-		console.log(p1);
+		
 		if (p1.isFertile == true && p2.isFertile == true){
-			for (let j = 0; j < randomGaussian(3,3); j++)
-				makeNew(p1, p2);
+			for (let j = 0; j < Math.floor(Math.random()*7)+1; j++)
+				makeNew(p1, p2, 1);
 		} else {
 			console.log("the fertile check isn't working.");
 			console.log(p2);
@@ -102,11 +103,70 @@ function new1(){
 			console.log(p1.SN);
 		}
 	}
-	console.log(children);
-
+	
+	
+	for (let i = 0; i < citizens; i++){
+		for (let j = 0; j < citizens; j++){
+			if(human[i].generation >= 1 && human[j].generation >= 1){
+				if (human[i].mother == human[j].mother && human[i].father == human[j].father && human[j].fullName != human[i].fullName){
+					if (human[i].sex == "male"){
+						human[i].brothers.push(human[j]);
+					} else if (human[i].sex == "female"){
+						human[i].sisters.push(human[j]);
+					}
+			}
+			}
+		}
+	}
+	matchMaker(true);
+	for (i=0; i < newCouples.length; i++){
+		let parent1 = newCouples[i].mother;
+		let parent2 = newCouples[i].father;
+		makeNew(parent1, parent2, 2);
+	}
+	
 }
 
-
+function matchMaker(init){
+	let batchA = [];
+	let batchT = [];
+	let batchNumA = 0;
+	let batchNumT = 0;
+	if (init == true){
+		for (let i = 0; i <citizens; i++){
+			if (human[i].generation == 1 && human[i].isAlive == true && human[i].spouce == null){
+				if (human[i].age >= 18){
+					batchA.push(human[i].citizenNum);
+					batchNumA++;
+				}
+			}
+		}
+		for (let i = 0; i < batchNumA; i++){
+			let Bat1 = human[batchA[i]];
+			if (Bat1.sex == "female"){
+				for (let j = 0; j < batchNumA; j++){
+					let Bat2 = human[batchA[j]];
+					if (Bat2.sex == "male"){
+						if (Bat2.lastName != Bat1.lastName && Bat2.sex != Bat1.sex && Bat1.isSingle == true && Bat2.isSingle == true){
+							Bat1.lastName = Bat2.lastName;
+							Bat1.isSingle = false;
+							Bat1.fullName = Bat1.firstName + " " + Bat1.lastName;
+							Bat1.spouce = Bat2.fullName;
+							Bat2.isSingle = false;
+							Bat2.spouce = Bat1.fullName;
+							let coupleName = {
+								mother: Bat1,
+								father: Bat2,
+								isInit: true
+							}
+							newCouples.push(coupleName);
+						}
+					}
+				}
+			}
+		}
+	}
+}
 
 var a = document.getElementById("1");
 function new2(generation, lastName, isHead, spouce, sex) {
@@ -192,7 +252,7 @@ function new2(generation, lastName, isHead, spouce, sex) {
         lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
         fullName = firstName + " " + lastName;
         let tempRand = Math.floor(Math.random() * 10);
-        if (tempRand < 7) {
+        if (tempRand < 8) {
             let spouceSex = "female";
             if (spouceSex == sex) {
                 spouceSex = "male";
@@ -257,12 +317,17 @@ let object = {
 if (faith < 80 && promiscuous > 70){
 	cheaters.push(object);
 }
+if (sex == "male"){
+		men.push(object);
+	} else if (sex == "female"){
+		women.push(object);
+}
 
 human.push(object);
 citizens++;
 }
 
-function makeNew(parent1, parent2){
+function makeNew(parent1, parent2, generation){
 	let isAlive = true;
     let code = [];
 	for (let i =0; i < 300; i++){
@@ -342,16 +407,39 @@ function makeNew(parent1, parent2){
 	} else if (parent2.age > parent1.age){
 		youngestParent = parent1.age;
 	}
-	let age = (Math.floor(Math.random()*30))+15;
-	if (age > youngestParent-15){
-		age = youngestParent-15;
+	let age;
+	if(generation == 1){
+		age = (Math.floor(Math.random()*30))+15;
+		if (age > youngestParent-15){
+			age = youngestParent-15;
+		}
+		if (age < 15){
+			age = 15;
+		}
+	} else if (generation == 2){
+		age = (Math.floor(Math.random()*30));
+	} else {
+		let age = 0;
 	}
-	if (age < 15){
-		age = 15;
+	let sex;
+	let firstName;
+	let sexRand = Math.floor(Math.random()*10);
+	if (women.length <= men.length){
+		sex = "female";
+		firstName = femNames[Math.floor(Math.random()*femNames.length)];
+	} else if (men.length < women.length) {
+		sex = "male";
+		firstName = mascNames[Math.floor(Math.random()*mascNames.length)];
 	}
+	let brothers = [];
+	let sisters = [];
 
-
-
+	let fullName = firstName + " " + lastName;
+	let power = 0;
+	for (let i=0; i < 20; i++){
+		let temp = totalSkill[i];
+		power = power + temp;
+	}
 	let object = {
 		DNA: code,
 		isAlive: isAlive,
@@ -380,11 +468,17 @@ function makeNew(parent1, parent2){
 	    weaving: totalSkill[17],
 	    yield: totalSkill[18],
 	    virtue: totalSkill[19],
-	    generation: 1,
+	    generation: generation,
 	    age: age,
-	    youngestParent: youngestParent
-
-
+	    youngestParent: youngestParent,
+	    sex: sex,
+	    firstName: firstName,
+	    brothers: brothers,
+	    sisters: sisters,
+	    isSingle: true,
+	    spouce: null,
+	    fullName: fullName,
+	    power: power
 
 	};
 	let faith = totalSkill[13];
@@ -394,5 +488,11 @@ function makeNew(parent1, parent2){
 	}
 	children.push(object);
 	human.push(object);
-	citizens++;
+	if (sex == "male"){
+		men.push(object);
+	} else if (sex == "female"){
+		women.push(object);
 	}
+	citizens++;
+}
+new1();
